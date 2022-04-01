@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     Int             @id @unique @default(autoincrement())
+  email                  String          @unique
+  name                   String
+  hash                   String
+  profilePicURL          String?
+  posts                  Post[]
+  friendRequestsSent     FriendRequest[] @relation("friend-request-send")
+  friendRequestsReceived FriendRequest[] @relation("friend-request-receive")
+  friendedBy             User[]          @relation("friendship", references: [id])
+  friending              User[]          @relation("friendship", references: [id])
+  comments               Comment[]
+  postsLiked             UserLikePost[]
+}
+
+model Post {
+  id        Int            @id @unique @default(autoincrement())
+  text      String
+  imgURL    String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  userId    Int
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  userLike  UserLikePost[]
+}
+
+model UserLikePost {
+  postId  Int
+  userId  Int
+  likedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@id([postId, userId])
+}
+
+enum RequestState {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model FriendRequest {
+  senderId     Int
+  receiverId   Int
+  sender       User         @relation(fields: [senderId], references: [id], name: "friend-request-send", onDelete: Cascade)
+  receiver     User         @relation(fields: [receiverId], references: [id], name: "friend-request-receive", onDelete: Cascade)
+  requestState RequestState
+
+  @@id([senderId, receiverId])
+}
+
+model Comment {
+  id          Int       @id @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  commentText String
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId      Int
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parentId    Int?
+  parent      Comment?  @relation("Comment", fields: [parentId], references: [id], onDelete: Cascade)
+  child       Comment[] @relation("Comment")
+}
