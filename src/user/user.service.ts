@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async findUserByEmail(email: string) {
+  async findByEmail(email: string) {
     const user = await this.prisma.user.findUnique({
       where: {
         email: email,
@@ -14,5 +15,43 @@ export class UserService {
     if (user) {
       return user;
     } else return null;
+  }
+
+  async findById(id: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    if (user) {
+      return user;
+    } else return null;
+  }
+
+  async createOne(email: string, hash: string, name: string) {
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email: email,
+          hash: hash,
+          name: name,
+        },
+        select: {
+          email: true,
+          name: true,
+          id: true,
+        },
+      });
+      return user;
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        throw new ConflictException(`Email ${email} is already used`);
+      } else {
+        throw new Error(e);
+      }
+    }
   }
 }
