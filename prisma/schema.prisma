@@ -23,6 +23,7 @@ model User {
   friending              User[]          @relation("friendship", references: [id])
   comments               Comment[]
   postsLiked             UserLikePost[]
+  hashedRT               String?
 }
 
 model Post {

@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   HttpCode,
@@ -10,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDTO } from './dto/sign-up.dto';
+import { JwtAccessAuthGuard } from './guards/jwt-auth.guard';
+import { JwtRefreshAuthGuard } from './guards/jwtRefresh-auth.guard';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
 @Controller('auth')
@@ -40,5 +41,24 @@ export class AuthController {
   @Post('sign-in')
   async signIn(@Req() req) {
     return this.authService.login(req.user);
+  }
+
+  @UseGuards(JwtAccessAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @Post('logout')
+  async logOut(@Req() req) {
+    return this.authService.logout(req.user.id);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtRefreshAuthGuard)
+  @Post('refresh')
+  async refresh(@Req() req) {
+    console.log(req.user);
+    const res = await this.authService.refreshTokens(
+      req.user.userId,
+      req.user.refresh_token,
+    );
+    return res;
   }
 }

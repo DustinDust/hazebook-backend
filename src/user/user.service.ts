@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -49,6 +53,47 @@ export class UserService {
         e.code === 'P2002'
       ) {
         throw new ConflictException(`Email ${email} is already used`);
+      } else {
+        throw new Error(e);
+      }
+    }
+  }
+
+  async updateUserRefreshHash(userId: number, hashRt: string) {
+    try {
+      await this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          hashedRT: hashRt,
+        },
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException(e.message);
+      } else {
+        throw new Error(e);
+      }
+    }
+  }
+
+  async removeRefreshHash(id: number) {
+    try {
+      await this.prisma.user.updateMany({
+        where: {
+          id: id,
+          hashedRT: {
+            not: null,
+          },
+        },
+        data: {
+          hashedRT: null,
+        },
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException(e.message);
       } else {
         throw new Error(e);
       }
