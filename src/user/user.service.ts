@@ -3,42 +3,66 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-
+import { UserCreateParams, UserFindParams } from './dto';
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async findByEmail(email: string) {
-    const user = await this.prisma.user.findUnique({
+  async findUser(findParams: UserFindParams) {
+    const hasKeys = Object.keys(findParams).length > 0;
+    const data = await this.prisma.user.findMany({
+      where: {
+        OR: hasKeys
+          ? [
+              { email: findParams.email },
+              {
+                name: {
+                  contains: findParams.name,
+                },
+              },
+              { id: findParams.id },
+            ]
+          : undefined,
+      },
+      select: {
+        email: true,
+        name: true,
+        id: true,
+        profilePicURL: true,
+        friendRequestsReceived: {
+          select: {
+            sender: true,
+          },
+        },
+        friending: true,
+      },
+    });
+    return data;
+  }
+
+  async findOneByEmail(email: string) {
+    return await this.prisma.user.findUnique({
       where: {
         email: email,
       },
     });
-    if (user) {
-      return user;
-    } else return null;
   }
 
-  async findById(id: number) {
-    const user = await this.prisma.user.findUnique({
+  async findOneById(id: number) {
+    return await this.prisma.user.findUnique({
       where: {
         id: id,
       },
     });
-    if (user) {
-      return user;
-    } else return null;
   }
 
-  async createOne(email: string, hash: string, name: string) {
+  async createOne(userCP: UserCreateParams) {
     try {
       const user = await this.prisma.user.create({
         data: {
-          email: email,
-          hash: hash,
-          name: name,
+          ...userCP,
         },
         select: {
           email: true,
@@ -52,13 +76,41 @@ export class UserService {
         e instanceof Prisma.PrismaClientKnownRequestError &&
         e.code === 'P2002'
       ) {
-        throw new ConflictException(`Email ${email} is already used`);
+        throw new ConflictException(`Email ${userCP.email} is already used`);
       } else {
         throw new Error(e);
       }
     }
   }
 
+  // update data only
+  async updateUser(userData: User) {
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: {
+          id: userData.id,
+        },
+        data: {
+          email: userData.email,
+          name: userData.name,
+          hash: userData.hash,
+        },
+      });
+      return updatedUser;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new BadRequestException(e.message);
+      } else {
+        throw new Error(e);
+      }
+    }
+  }
+
+  /**
+   * This function works with hashed refresh token
+   * @param userId
+   * @param hashRt
+   */
   async updateUserRefreshHash(userId: number, hashRt: string) {
     try {
       await this.prisma.user.update({
@@ -78,6 +130,11 @@ export class UserService {
     }
   }
 
+  /**
+   * This function works with hashed refresh token
+   * @param userId
+   * @param hashRt
+   */
   async removeRefreshHash(id: number) {
     try {
       await this.prisma.user.updateMany({
@@ -98,5 +155,13 @@ export class UserService {
         throw new Error(e);
       }
     }
+  }
+
+  async deleteUser(id: number) {
+    await this.prisma.user.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }

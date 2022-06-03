@@ -21,7 +21,7 @@ export class AuthService {
   ) {}
 
   async authenticateUser(email: string, password: string) {
-    const user = await this.userService.findByEmail(email);
+    const user = await this.userService.findOneByEmail(email);
     if (user) {
       const isMatched = await this.passwordService.compare(password, user.hash);
       if (isMatched) {
@@ -44,7 +44,7 @@ export class AuthService {
   async register(email: string, password: string, name: string) {
     const hash = await this.passwordService.hash(password);
     try {
-      const user = await this.userService.createOne(email, hash, name);
+      const user = await this.userService.createOne({ email, hash, name });
       if (user) {
         return user;
       }
@@ -71,7 +71,7 @@ export class AuthService {
   }
 
   async refreshTokens(userId: number, refreshToken: string) {
-    const user = await this.userService.findById(userId);
+    const user = await this.userService.findOneById(userId);
     if (!user) {
       throw new ForbiddenException('Access denied');
     }
