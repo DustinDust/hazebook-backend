@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { User, UserLikePost } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -50,5 +50,25 @@ export class UserLikePostService {
       },
     });
     return res;
+  }
+
+  async likePost(userId: number, postId: number): Promise<UserLikePost> {
+    return await this.prisma.userLikePost.create({
+      data: {
+        userId: userId,
+        postId: postId,
+      },
+    });
+  }
+
+  async unlikePost(userId: number, postId: number) {
+    await this.prisma.userLikePost.delete({
+      where: {
+        postId_userId: {
+          postId: postId,
+          userId: userId,
+        },
+      },
+    });
   }
 }

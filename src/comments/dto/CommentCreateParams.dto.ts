@@ -17,5 +17,6 @@ export class CommentCreateParams {
 
   @IsInt()
   @Transform(({ value }) => parseInt(value))
-  userId: number;
+  @IsOptional()
+  userId?: number;
 }
