@@ -57,6 +57,8 @@ enum RequestState {
 model FriendRequest {
   senderId     Int
   receiverId   Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
   sender       User         @relation(fields: [senderId], references: [id], name: "friend-request-send", onDelete: Cascade)
   receiver     User         @relation(fields: [receiverId], references: [id], name: "friend-request-receive", onDelete: Cascade)
   requestState RequestState

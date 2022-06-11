@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { CommentModule } from './comments/comment.module';
+import { FriendModule } from './friend/Friend.module';
 import { PostModule } from './post/post.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserLikePostModule } from './user-likes-post/UserLikePost.module';
@@ -17,6 +18,7 @@ import { UserModule } from './user/user.module';
     UserModule,
     UserLikePostModule,
     CommentModule,
+    FriendModule,
   ],
   controllers: [AppController],
 })

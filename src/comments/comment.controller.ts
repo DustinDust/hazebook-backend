@@ -3,6 +3,8 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  HttpCode,
+  HttpStatus,
   Logger,
   Param,
   ParseIntPipe,
@@ -23,7 +25,9 @@ export class CommentController {
   private readonly logger = new Logger(CommentController.name);
   constructor(private commentService: CommentService) {}
 
+  @HttpCode(HttpStatus.OK)
   @Get('find')
+  @UseGuards(JwtAccessAuthGuard)
   async findComments(@Query() query: CommentFindParams): Promise<ResponseType> {
     try {
       const comments = await this.commentService.findComment(query);
@@ -42,6 +46,7 @@ export class CommentController {
     }
   }
 
+  @HttpCode(HttpStatus.CREATED)
   @Post('create')
   @UseGuards(JwtAccessAuthGuard)
   async createComment(
@@ -68,6 +73,7 @@ export class CommentController {
     }
   }
 
+  @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAccessAuthGuard)
   @Post('update')
   async updateComment(
@@ -93,6 +99,7 @@ export class CommentController {
     }
   }
 
+  @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAccessAuthGuard)
   @Post('delete/:id')
   async deleteComment(
